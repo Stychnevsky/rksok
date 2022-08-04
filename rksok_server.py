@@ -25,7 +25,7 @@ class RksokServer:
         splited_data = self.data[:-4].split('\r\n')
         first_line = splited_data[0]
         self.check_protocol(first_line)
-        request_body = self.data[len(first_line) + 2:]
+        request_body = self.data[len(first_line) + 2:-4] # TODO: сделать const REQUEST_ENDLINE
         
         first_line = first_line.rstrip("РКСОК/1.0") # TODO: небезопасно что 1.1 тоже подойдет тут!! и что пробела не будет!
         command = first_line.split()[0]

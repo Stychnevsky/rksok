@@ -1,6 +1,7 @@
 import aiofiles
 import json
 from loguru import logger
+from consts import ENCODING
 from exceptions import UserNotFoundError
 
 class DatabaseClient:
@@ -8,7 +9,7 @@ class DatabaseClient:
         self.db = None
     
     async def load_db(self):
-        async with aiofiles.open("database.json") as db:
+        async with aiofiles.open("database.json", encoding=ENCODING) as db:
             if not self.db:
                 logger.debug('Start to open and load database')
                 data = await db.read()
@@ -16,9 +17,9 @@ class DatabaseClient:
                 logger.debug('Database successfully loaded')
 
     async def rewrite_db(self):
-        async with aiofiles.open("database.json", 'w', encoding='utf-8') as db:
+        async with aiofiles.open("database.json", 'w', encoding=ENCODING) as db:
             logger.debug('Start to save (rewrite) database')
-            await db.write(json.dumps(self.db))
+            await db.write(json.dumps(self.db, ensure_ascii=False))
             logger.debug('Database successfully rewrited')
 
 
