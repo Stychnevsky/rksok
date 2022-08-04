@@ -1,6 +1,6 @@
 import asyncio
 from rksok_server import RksokServer
-from consts import ENCODING
+from consts import ENCODING, SERVER_PORT
 from loguru import logger
 
 connected_clients = 0
@@ -39,11 +39,11 @@ async def tcp_server(reader, writer):
 
 async def main():
     server = await asyncio.start_server(
-        tcp_server, '0.0.0.0', 3333)
+        tcp_server, '0.0.0.0', SERVER_PORT)
 
     addrs = ', '.join(str(sock.getsockname()) for sock in server.sockets)
     print(f'Serving on {addrs}')
-    logger.info(f'Server started. Serving on {addrs}')
+    logger.info(f'Server started. Port 3333. Serving on {addrs}')
     
     async with server:
         await server.serve_forever()

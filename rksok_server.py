@@ -5,29 +5,30 @@ from rksok_response import RksokResponse
 from request_validator import RequestValidator
 from loguru import logger
 from consts import PROTOCOL
+from typing import Tuple
 
 
 class RksokServer:
-    def __init__(self, data):
+    def __init__(self, data: str):
         self.data = data
     
     @staticmethod
-    def check_protocol(first_line):
+    def check_protocol(first_line: str) -> None:
         if not (first_line[-9:] == 'РКСОК/1.0' and first_line[-10]==' '):
             raise WrongProtocolError
 
     @staticmethod
-    def check_rksok_command(command):
+    def check_rksok_command(command: str) -> None:
         if command not in ('ОТДОВАЙ', 'ОТДОВАЙ', 'УДОЛИ' , 'ЗОПИШИ'):
             raise WrongProtocolError
 
-    def parse_request(self):
+    def parse_request(self) -> Tuple[str, str, str]:
         splited_data = self.data[:-4].split('\r\n')
         first_line = splited_data[0]
         self.check_protocol(first_line)
-        request_body = self.data[len(first_line) + 2:-4] # TODO: сделать const REQUEST_ENDLINE
+        request_body = self.data[len(first_line) + 2:-4]
         
-        first_line = first_line.rstrip("РКСОК/1.0") # TODO: небезопасно что 1.1 тоже подойдет тут!! и что пробела не будет!
+        first_line = first_line.rstrip("РКСОК/1.0")
         command = first_line.split()[0]
         self.check_rksok_command(command)
         user = first_line.lstrip(command).strip()
@@ -41,18 +42,16 @@ class RksokServer:
             raise TooLongUserNameError
         return command, user, request_body
 
-    def validate_request(self):
-        
+    def validate_request(self) -> None:
         request_to_check = f'АМОЖНА? {PROTOCOL}\r\n{self.data}' 
         self.validation_ok, self.validation_response = RequestValidator(request_to_check).validate_request()
-        logger.debug('Result of validation')
 
-    async def process_request(self):
+    async def process_request(self) -> str:
         try:
-            command, user, request_body = self.parse_request() # TODO: лучше это сделать атрибутами класса?
+            command, user, request_body = self.parse_request()
         except WrongRequestFormatError:
             logger.warning('Wrong request!')
-            return RksokResponse(answer='НИПОНЯЛ').raw_response() # TODO: лучше raw_response делать в классе выше
+            return RksokResponse(answer='НИПОНЯЛ').raw_response()
 
         self.validate_request()
         if not self.validation_ok:

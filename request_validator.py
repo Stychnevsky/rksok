@@ -2,16 +2,17 @@ import socket
 from exceptions import WrongResponseFromValidationServerError
 from consts import ENCODING
 from loguru import logger
+from typing import Tuple
 
 VALIDATION_SERVER = 'vragi-vezde.to.digital'
 VALIDATION_PORT = 51624
 
 class RequestValidator:
-    def __init__(self, data):
+    def __init__(self, data: str):
         self.data = data
         self._conn = None
     
-    def parse_response(self): # придумать как лучше обработать
+    def parse_response(self) -> Tuple[bool, str]: # придумать как лучше обработать
         data = self.response
 
         if data[:6] == "НИЛЬЗЯ":
@@ -25,7 +26,7 @@ class RequestValidator:
 
         raise WrongResponseFromValidationServerError
 
-    def validate_request(self):
+    def validate_request(self) -> Tuple[bool, str]:
         if not self._conn:
             self._conn = socket.create_connection((VALIDATION_SERVER, VALIDATION_PORT))
         self._conn.sendall(self.data.encode(ENCODING))
