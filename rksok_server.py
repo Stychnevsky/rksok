@@ -33,9 +33,11 @@ class RksokServer:
         user = first_line.lstrip(command).strip()
 
         if not user:
+            logger.warning('Server cant find user name in request!')
             raise UserNameNotDefienedError
 
-        if len(user) >= 30:
+        if len(user) > 30:
+            logger.warning('Too long user name length! Max is 30')
             raise TooLongUserNameError
         return command, user, request_body
 
