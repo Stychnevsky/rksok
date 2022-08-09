@@ -32,7 +32,7 @@ class RksokRequestHandler:
         splited_data = self.data[:-request_endline_len].split('\r\n')
         first_line = splited_data[0]
         self.check_protocol(first_line)
-        request_body = self.data[len(first_line) + 2:request_endline_len]
+        request_body = self.data[len(first_line) + 2:-request_endline_len]
         
         first_line = first_line[:-len(PROTOCOL)]
         command = first_line.split()[0]
@@ -50,12 +50,12 @@ class RksokRequestHandler:
 
     def validate_request_security(self) -> None:
         request_to_check = f'{security_commands.CHECK} {PROTOCOL}\r\n{self.data}'
-        SecurityValidator(request_to_check).validate_request()
+        SecurityValidator().validate_request(request_to_check)
 
     async def process_request(self) -> str:
         try:
             command, user, request_body = self.parse_request()
-            self.validate_request()
+            self.validate_request_security()
 
             db_client = DbClient()
 

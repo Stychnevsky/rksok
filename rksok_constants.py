@@ -2,7 +2,7 @@ from enum import Enum
 from http.client import OK
 
 class RksokRequestCommands(str, Enum):
-    GET = 'ОТДАЙ'
+    GET = 'ОТДОВАЙ'
     POST = 'ЗОПИШИ'
     DELETE = 'УДОЛИ'
 

@@ -43,7 +43,6 @@ async def main():
         tcp_server, SERVER_IP, SERVER_PORT)
 
     addrs = ', '.join(str(sock.getsockname()) for sock in server.sockets)
-    print(f'Serving on {addrs}')
     logger.info(f'Server started. Port {SERVER_PORT}. Serving on {addrs}')
     
     async with server:
