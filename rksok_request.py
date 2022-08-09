@@ -1,16 +1,17 @@
 from exceptions import (UserNotFoundError, WrongProtocolError, TooLongUserNameError, WrongRequestFormatError,
-WrongCommandError, UserNameNotDefienedError)
+WrongCommandError, UserNameNotDefienedError, ValidationNotPassedError)
 from database_client import DatabaseClient as DbClient
 from rksok_response import RksokResponse
 from security_validator import SecurityValidator
 from loguru import logger
-from config import PROTOCOL, USER_NAME_MAX_LEN
+from config import PROTOCOL, USER_NAME_MAX_LEN, REQUEST_END
 from typing import Tuple
 from rksok_constants import RksokRequestCommands as commands
 from rksok_constants import RksokResponseStatuses as statuses
+from rksok_constants import RksokSecurityRequestCommands as security_commands
 
 
-class RksokServer:
+class RksokRequestHandler:
     def __init__(self, data: str):
         self.data = data
     
@@ -27,12 +28,13 @@ class RksokServer:
         raise WrongProtocolError
 
     def parse_request(self) -> Tuple[str, str, str]:
-        splited_data = self.data[:-4].split('\r\n') # TODO изменить -4 на END
+        request_endline_len = len(REQUEST_END)
+        splited_data = self.data[:-request_endline_len].split('\r\n')
         first_line = splited_data[0]
         self.check_protocol(first_line)
-        request_body = self.data[len(first_line) + 2:-4]
+        request_body = self.data[len(first_line) + 2:request_endline_len]
         
-        first_line = first_line.rstrip(PROTOCOL) # TODO: опасное использование PROTOCOL
+        first_line = first_line[:-len(PROTOCOL)]
         command = first_line.split()[0]
         self.check_rksok_command(command)
         user = first_line.lstrip(command).strip()
@@ -42,27 +44,21 @@ class RksokServer:
             raise UserNameNotDefienedError
 
         if len(user) > USER_NAME_MAX_LEN:
-            logger.warning(f'Too long user name length! Max is {}')
+            logger.warning(f'Too long user name length! Max is {USER_NAME_MAX_LEN}')
             raise TooLongUserNameError
         return command, user, request_body
 
-    def validate_request(self) -> None:
-        request_to_check = f'АМОЖНА? {PROTOCOL}\r\n{self.data}' # TODO обернуть АМОЖНА
-        self.validation_ok, self.validation_response = SecurityValidator(request_to_check).validate_request()
+    def validate_request_security(self) -> None:
+        request_to_check = f'{security_commands.CHECK} {PROTOCOL}\r\n{self.data}'
+        SecurityValidator(request_to_check).validate_request()
 
     async def process_request(self) -> str:
         try:
             command, user, request_body = self.parse_request()
-        except WrongRequestFormatError:
-            logger.warning('Wrong request!')
-            return RksokResponse(status=statuses.INCORRECT_REQUEST).generate_response()
+            self.validate_request()
 
-        self.validate_request()
-        if not self.validation_ok:
-            return self.validation_response
-        
-        db_client = DbClient()
-        try:
+            db_client = DbClient()
+
             if command == commands.GET:
                     user_date = await db_client.get_user_data(user)
 
@@ -77,6 +73,13 @@ class RksokServer:
             response = RksokResponse(status=statuses.OK, body=user_date).generate_response()
             logger.debug(f'Response from server: {response}')
             return response
+
+        except WrongRequestFormatError:
+            logger.warning('Wrong request!')
+            return RksokResponse(status=statuses.INCORRECT_REQUEST).generate_response()
+
+        except ValidationNotPassedError as err:
+            return err
 
         except UserNotFoundError:
             logger.warning(f'User {user} not found in database')

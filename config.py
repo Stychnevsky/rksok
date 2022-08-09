@@ -1,3 +1,11 @@
 ENCODING = "UTF-8"
 PROTOCOL = "РКСОК/1.0"
+
+REQUEST_END = '\r\n\r\n'
+USER_NAME_MAX_LEN = 30
+
+SERVER_IP = '0.0.0.0'
 SERVER_PORT = 3000
+
+VALIDATION_SERVER = 'vragi-vezde.to.digital'
+VALIDATION_PORT = 51624

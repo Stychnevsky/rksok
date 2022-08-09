@@ -1,7 +1,7 @@
 import aiofiles
 import json
 from loguru import logger
-from consts import ENCODING
+from config import ENCODING
 from exceptions import UserNotFoundError
 
 class DatabaseClient:

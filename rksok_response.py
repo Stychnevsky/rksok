@@ -1,12 +1,12 @@
-from consts import PROTOCOL
+from config import PROTOCOL, REQUEST_END
 from typing import Optional
 
 class RksokResponse:
-    def __init__(self, answer: str, body: Optional[str] = None):
-        self.answer = answer
+    def __init__(self, status: str, body: Optional[str] = None):
+        self.status = status
         self.body = body
 
-    def raw_response(self) -> str:
+    def generate_response(self) -> str:
         body = '\r\n' + self.body if self.body else ''
-        response = f'{self.answer} {PROTOCOL}{body}\r\n\r\n'
+        response = f'{self.status} {PROTOCOL}{body}{REQUEST_END}'
         return response

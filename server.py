@@ -1,6 +1,6 @@
 import asyncio
-from rksok_server import RksokServer
-from consts import ENCODING, SERVER_PORT
+from rksok_request import RksokRequestHandler
+from config import ENCODING, SERVER_PORT, SERVER_IP, REQUEST_END
 from loguru import logger
 
 connected_clients = 0
@@ -21,11 +21,12 @@ async def tcp_server(reader, writer):
             connected_clients -= 1
             break
         request += data
-        if data.decode(ENCODING)[-4:] == '\r\n\r\n':
-            logger.debug(f'[ID {conn_id}] Data recieved: {data.decode(ENCODING)}')
-            response = await RksokServer(request.decode(ENCODING)).process_request()
-            logger.debug(f'[ID {conn_id}] Response from server:\n {response}')
-            writer.write(response.encode())
+        if data.decode(ENCODING)[-4:] == REQUEST_END:
+            decoded_request = request.decode(ENCODING)
+            logger.debug(f'[ID {conn_id}] Data recieved: {decoded_request}')
+            raw_response = await RksokRequestHandler(decoded_request).process_request()
+            logger.debug(f'[ID {conn_id}] Response from server:\n {raw_response}')
+            writer.write(raw_response.encode())
             await writer.drain()
             logger.debug(f'[ID {conn_id}] Response delivered')
             request = b""
@@ -39,11 +40,11 @@ async def tcp_server(reader, writer):
 
 async def main():
     server = await asyncio.start_server(
-        tcp_server, '0.0.0.0', SERVER_PORT)
+        tcp_server, SERVER_IP, SERVER_PORT)
 
     addrs = ', '.join(str(sock.getsockname()) for sock in server.sockets)
     print(f'Serving on {addrs}')
-    logger.info(f'Server started. Port 3333. Serving on {addrs}')
+    logger.info(f'Server started. Port {SERVER_PORT}. Serving on {addrs}')
     
     async with server:
         await server.serve_forever()

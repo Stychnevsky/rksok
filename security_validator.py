@@ -1,34 +1,19 @@
+from optparse import Option
 import socket
-from exceptions import WrongResponseFromValidationServerError
-from consts import ENCODING
+from exceptions import ValidationNotPassedError, WrongResponseFromValidationServerError
+from config import ENCODING, VALIDATION_SERVER, VALIDATION_PORT
 from loguru import logger
-from typing import Tuple
+from typing import Optional, Tuple
+from rksok_constants import RksokSecurityResponseStatuses as response_statuses
 
-VALIDATION_SERVER = 'vragi-vezde.to.digital'
-VALIDATION_PORT = 51624
-
-class RequestValidator:
-    def __init__(self, data: str):
-        self.data = data
+class SecurityValidator:
+    def __init__(self):
         self._conn = None
     
-    def parse_response(self) -> Tuple[bool, str]: # придумать как лучше обработать
-        data = self.response
-
-        if data[:6] == "НИЛЬЗЯ":
-            logger.warning('REJECTED answer from validation server recieved')
-            response = False, data
-            return response
-        
-        elif data[:5] == 'МОЖНА':
-            logger.debug('OK answer from validation server recieved')
-            return True, None
-
-        raise WrongResponseFromValidationServerError
-
-    def validate_request(self) -> Tuple[bool, str]:
+    def send_validation_request(self, data: str) -> str:
         if not self._conn:
             self._conn = socket.create_connection((VALIDATION_SERVER, VALIDATION_PORT))
+
         self._conn.sendall(self.data.encode(ENCODING))
         logger.debug('Send request to validation server')
         response = b""
@@ -38,5 +23,20 @@ class RequestValidator:
             logger.debug(f'Response from validation server recieved:{data.decode(ENCODING)}')
             if not data: break
             response += data
-        self.response = response.decode(ENCODING)
-        return self.parse_response()
+        return response.decode(ENCODING)
+
+    @staticmethod
+    def parse_response(response: str) -> Optional[bool]: # придумать как лучше обработать
+        if response.startswith(response_statuses.REJECTED):
+            logger.warning('REJECTED answer from validation server recieved')
+            raise ValidationNotPassedError(response)
+        
+        elif response.startswith(response_statuses.ALLOWED):
+            logger.debug('OK answer from validation server recieved')
+            return True
+
+        raise WrongResponseFromValidationServerError
+
+    def validate_request(self, data: str) -> Tuple[bool, str]:
+        response = self.send_validation_request(data)
+        return self.parse_response(response)
