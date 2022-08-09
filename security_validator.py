@@ -5,7 +5,7 @@ from config import ENCODING, VALIDATION_SERVER, VALIDATION_PORT
 from loguru import logger
 from typing import Optional, Tuple
 from rksok_constants import RksokSecurityResponseStatuses as response_statuses
-    
+ 
 class SecurityValidator:
     def __init__(self):
         self._conn = None

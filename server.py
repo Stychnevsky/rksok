@@ -4,8 +4,8 @@ from config import ENCODING, SERVER_PORT, SERVER_IP, REQUEST_END
 from loguru import logger
 
 connected_clients = 0
-connection_id = 0
-async def tcp_server(reader, writer):
+connection_id = 1
+async def tcp_server(reader: asyncio.StreamReader, writer: asyncio.StreamWriter ) -> None:
     global connected_clients
     global connection_id
     connected_clients += 1
@@ -38,7 +38,7 @@ async def tcp_server(reader, writer):
             break
 
 
-async def main():
+async def main() -> None:
     server = await asyncio.start_server(
         tcp_server, SERVER_IP, SERVER_PORT)
 
