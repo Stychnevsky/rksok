@@ -17,7 +17,8 @@ class UserNotFoundError(Exception):
     pass
 
 class ValidationNotPassedError(Exception):
-    pass
+    def __init__(self, validation_server_response: str) -> None:
+        self.response = validation_server_response
 
 class WrongResponseFromValidationServerError(Exception):
     pass

@@ -26,7 +26,7 @@ class SecurityValidator:
         return response.decode(ENCODING)
 
     @staticmethod
-    def parse_response(response: str) -> Optional[bool]: # придумать как лучше обработать
+    def parse_response(response: str) -> bool:
         if response.startswith(response_statuses.REJECTED):
             logger.warning('REJECTED answer from validation server recieved')
             raise ValidationNotPassedError(response)
@@ -37,6 +37,6 @@ class SecurityValidator:
 
         raise WrongResponseFromValidationServerError
 
-    def validate_request(self, data: str) -> Tuple[bool, str]:
+    def validate_request(self, data: str) -> bool:
         response = self.send_validation_request(data)
         return self.parse_response(response)
