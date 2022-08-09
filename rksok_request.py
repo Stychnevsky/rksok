@@ -78,8 +78,8 @@ class RksokRequestHandler:
             logger.warning('Wrong request!')
             return RksokResponse(status=statuses.INCORRECT_REQUEST).generate_response()
 
-        except ValidationNotPassedError as err:
-            return err
+        except ValidationNotPassedError as rejected_response:
+            return str(rejected_response)
 
         except UserNotFoundError:
             logger.warning(f'User {user} not found in database')
